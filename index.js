@@ -70,7 +70,7 @@ async function scrape(shopUrl) {
 
     console.log(data);
 
-    debugger;
+    // debugger;
 
     await browser.close();
 
