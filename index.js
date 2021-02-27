@@ -73,6 +73,6 @@ async function scrape(shopUrl) {
 
 };
 
-let server = app.listen(8080, function() {
-    console.log('Server is listening on port 8080')
+let server = app.listen(process.env.PORT || 3000, function() {
+    console.log('Server is listening on port ' + process.env.PORT || 3000)
 });
