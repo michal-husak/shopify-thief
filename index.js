@@ -86,7 +86,7 @@ async function scrape(shopUrl) {
         for (let index = 0; index < numOfPages; index++) {
             if(button.getAttribute('style') !== 'display: none;') {
                 document.getElementById('loadMore').click();
-                await delay(1000);
+                await delay(500);
                 rawReviews.push(...Array.from(document.getElementsByClassName('grid-item-wrap')));
             }
         }
