@@ -83,17 +83,20 @@ async function scrape(shopUrl) {
         const reviewsPerClick = 5;
         const numOfPages = Math.floor(numOfReviews / reviewsPerClick);
         const maxClicksPerPage = 10;
+        const rawReviews = Array.from(document.getElementsByClassName('grid-item-wrap'));
 
-        for (let index = 0; index < maxClicksPerPage; index++) {
-            document.getElementById('loadMore').click();
-            await delay(500);
+        for (let index = 0; index < numOfPages; index++) {
+            if(button.getAttribute('style') !== 'display: none;') {
+                document.getElementById('loadMore').click();
+                await delay(1000);
+                rawReviews.push(...Array.from(document.getElementsByClassName('grid-item-wrap')));
+            }
         }
         
-        var rawReviews = document.getElementsByClassName('grid-item-wrap');
         return parseReviews(rawReviews);
 
         function parseReviews(rawReviews) {
-            return Array.from(rawReviews).map(rawReview => {
+            const duplicateReviews = Array.from(rawReviews).map(rawReview => {
                 const img = rawReview.getElementsByClassName('item-img')[0];
                 return new Review(
                     rawReview.querySelector('.block.title').textContent,
@@ -101,6 +104,10 @@ async function scrape(shopUrl) {
                     img ? img.firstChild.src.replace('.jpg', '_mid.jpg') : null
                 );
             });
+
+            const uniqueReviews = duplicateReviews.filter((v,i,a)=>a.findIndex(t=>(t.author === v.author))===i);
+            return uniqueReviews;
+
         }
 
         function delay(time) {
