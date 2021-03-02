@@ -1,6 +1,7 @@
-const  puppeteer = require('puppeteer');
-var express = require('express')
-var app = express();
+const puppeteer = require('puppeteer');
+const ObjectsToCsv = require('objects-to-csv');
+const express = require('express')
+const app = express();
 
 app.get('/html', async function (req, res) {
     const url = req.query.url;
@@ -11,13 +12,15 @@ app.get('/html', async function (req, res) {
 
 app.get('/csv', async function (req, res) {
     const url = req.query.url;
+    const productHandle = req.query.productHandle;
     const data = await scrape(url);
     res.contentType = 'text/csv';
-    res.send(reviewsToCsv(data));
+    res.attachment('export.csv');
+    res.send(await reviewsToCsv(data, productHandle));
 });
 
 function reviewsToHtml(reviews) {
-    var text = '<div>';
+    let text = '<div>';
     text += '<p>num of reviews: ' + reviews.length + '</p>'; 
 
     reviews.forEach(review => {
@@ -37,15 +40,10 @@ function reviewsToHtml(reviews) {
     return text + '</div>';
 }
 
-function reviewsToCsv(reviews) {
-    var text = 'product_handle,state,rating,title,author,email,location,body,imageUrl,reply,created_at,replied_at';
-    text += '\r\n';
-    reviews.forEach(review => {
-        text += `,,,,${review.author},,,${review.body},${review.imageUrl ?? ''},,,`
-        text += '\r\n';
-    });
-
-    return text;
+async function reviewsToCsv(reviews, productHandle) {
+    reviews = reviews.map(review => ({...review, product_handle: productHandle}));
+    const csv = new ObjectsToCsv(reviews);
+    return await csv.toString(true, false);
 }
 
 async function scrape(shopUrl) {
@@ -92,7 +90,7 @@ async function scrape(shopUrl) {
                 rawReviews.push(...Array.from(document.getElementsByClassName('grid-item-wrap')));
             }
         }
-        
+
         return parseReviews(rawReviews);
 
         function parseReviews(rawReviews) {
