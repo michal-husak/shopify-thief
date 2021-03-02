@@ -116,8 +116,6 @@ async function scrape(shopUrl) {
 
     });
 
-    console.log(data);
-
     await browser.close();
 
     return data;
