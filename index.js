@@ -99,7 +99,8 @@ async function scrape(shopUrl) {
                 return new Review(
                     rawReview.querySelector('.block.title').textContent,
                     rawReview.querySelector('.pre-wrap.main-text.action').textContent,
-                    img ? img.firstChild.src.replace('.jpg', '_mid.jpg') : null
+                    img ? img.firstChild.src.replace('.jpg', '_mid.jpg') : null,
+                    5
                 );
             });
 
