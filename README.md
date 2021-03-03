@@ -19,3 +19,5 @@ This will give you an HTML formatted output. Just to see what is being crawled
 
 It will automatically download a CSV file.
 This CSV can be imported to your shopify. More details [here](https://www.notion.so/How-to-Import-Product-Reviews-from-a-CSV-file-c8a96b601ad044eea968b317e33c097d).
+
+Both endpoints will translate the review comments into German.
