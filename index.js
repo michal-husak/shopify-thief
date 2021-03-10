@@ -88,12 +88,16 @@ async function scrape(shopUrl) {
     let data = await frame.evaluate(async () => {
 
         class Review {
-            constructor(author, body, original_body, imageUrl, rating, product_handle ) {
+            constructor(author, body, original_body, imageUrl, rating, title, email, created_at, state, product_handle ) {
               this.author = author;
               this.body = body;
               this.original_body = original_body;
               this.imageUrl = imageUrl;
               this.rating = rating;
+              this.title = title;
+              this.email = email;
+              this.created_at = created_at;
+              this.state = state;
               this.product_handle = product_handle;
             }
         }
@@ -124,7 +128,11 @@ async function scrape(shopUrl) {
                     rawReview.querySelector('.pre-wrap.main-text.action').textContent,
                     rawReview.querySelector('.pre-wrap.main-text.action').textContent,
                     img ? img.firstChild.src.replace('.jpg', '_mid.jpg') : null,
-                    5
+                    5,
+                    'title',
+                    'john.appleseed@example.com',
+                    '2020-01-09 16:40:12 -0400',
+                    'published'
                 );
             });
 
