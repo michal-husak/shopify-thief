@@ -2,7 +2,12 @@ const puppeteer = require('puppeteer');
 const ObjectsToCsv = require('objects-to-csv');
 const translate = require('@vitalets/google-translate-api');
 const express = require('express');
+const path = require('path');
 const app = express();
+
+app.get('/', (req, res) => {
+    res.render('index');
+});
 
 app.get('/html', async function (req, res) {
     const url = req.query.url;
@@ -24,7 +29,7 @@ app.get('/csv', async function (req, res) {
 
 function reviewsToHtml(reviews) {
     let text = '<div>';
-    text += '<p>num of reviews: ' + reviews.length + '</p>'; 
+    text += '<p>Number of reviews: ' + reviews.length + '</p>'; 
 
     reviews.forEach(review => {
         text += '<h4>';
@@ -154,7 +159,9 @@ async function scrape(shopUrl) {
     return data;
 
 };
-
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'pug');
+app.use(express.static(path.join(__dirname, 'public')));
 let server = app.listen(process.env.PORT || 3000, function() {
-    console.log('Server is listening on port ' + process.env.PORT || 3000)
+    console.log('Server is listening on port ' + process?.env?.PORT || 3000)
 });

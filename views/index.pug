@@ -1,0 +1,24 @@
+extends layout
+
+block layout-content
+  div.view
+    h1.banner Shopify Thief
+    img(src="/hasan.png", alt="racoon")
+    label(for="url") URL:
+    input#url(type="url", name="url", placeholder="https://www.amazinglycat.com/products/windmill-cat-toy-5-in-1")
+    label(for="productHandle") Product Handle:
+    input#productHandle(type="text", name="productHandle", placeholder="paw-peller")
+    input(type="button", value="Download CSV" onclick="getCSV();") 
+
+  script.
+    function getCSV(username) {
+        const url = document.getElementById('url').value;
+        const productHandle = document.getElementById('productHandle').value;
+        redirectBlank('/csv?url=' + url + '&productHandle=' + productHandle);
+    }
+
+    function redirectBlank(url) {
+        var a = document.createElement('a');
+        a.href=url;
+        a.click();
+    }

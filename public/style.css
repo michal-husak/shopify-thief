@@ -1,0 +1,16 @@
+.view * {
+    text-align: center;
+    margin: auto;
+    display: block;
+}
+
+.view input, .view img, .view h1.banner {
+    margin-bottom: 20px;
+}
+
+input#url {
+    width: 600px;
+}
+
+
+
