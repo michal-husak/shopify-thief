@@ -3,11 +3,11 @@ extends layout
 block layout-content
   div.view
     h1.banner Shopify Thief
-    img(src="/hasan.png", alt="racoon")
-    label(for="url") URL:
-    input#url(type="url", name="url", placeholder="https://www.amazinglycat.com/products/windmill-cat-toy-5-in-1")
+    img(src='/hasan.png', alt='racoon')
+    label(for='url') URL:
+    input#url(type='url', name='url', placeholder='https://www.amazinglycat.com/products/windmill-cat-toy-5-in-1', value='https://themovermate.com/products/the-mover-mate')
     label(for="productHandle") Product Handle:
-    input#productHandle(type="text", name="productHandle", placeholder="paw-peller")
+    input#productHandle(type="text", name="productHandle", placeholder="paw-peller", value='abc')
     input(type="button", value="Download CSV" onclick="getCSV();") 
 
   script.
