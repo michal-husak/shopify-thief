@@ -4,6 +4,7 @@ const translate = require('@vitalets/google-translate-api');
 const express = require('express');
 const path = require('path');
 const app = express();
+const fetch = require('node-fetch');
 
 app.get('/', (req, res) => {
     res.render('index');
@@ -29,7 +30,7 @@ app.get('/csv', async function (req, res) {
 
 function reviewsToHtml(reviews) {
     let text = '<div>';
-    text += '<p>Number of reviews: ' + reviews.length + '</p>'; 
+    text += '<p>Number of reviews: ' + reviews.length + '</p>';
 
     reviews.forEach(review => {
         text += '<h4>';
@@ -52,7 +53,7 @@ function reviewsToHtml(reviews) {
 }
 
 async function reviewsToCsv(reviews, productHandle) {
-    reviews = reviews.map(review => ({...review, product_handle: productHandle}));
+    reviews = reviews.map(review => ({ ...review, product_handle: productHandle }));
     const csv = new ObjectsToCsv(reviews);
     return await csv.toString(true, false);
 }
@@ -77,33 +78,62 @@ async function translateReview(review) {
 
 async function scrape(shopUrl) {
 
-    let browser = await puppeteer.launch({
+    let appsolveVersion = null;
+
+    const browser = await puppeteer.launch({
         args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
         ],
-      });
-    let page = await browser.newPage();
+    });
+    const page = await browser.newPage();
+    await page.setRequestInterception(true);
+
+    // listening on a browser request to appsolve.io
+    page.on('request', request => {
+        if (request.url().startsWith('https://appsolve.io/assets/js/bundle.js')) {
+            const url = new URL(request.url());
+            appsolveVersion = url.searchParams.get('v');
+        }
+        request.continue();
+    });
 
     await page.goto(shopUrl, { waitUntil: 'networkidle2' });
 
     const frameHandle = await page.$('iframe[id="looxReviewsFrame"]');
-    const frame = await frameHandle.contentFrame();
+    let data = null;
 
-    let data = await frame.evaluate(async () => {
+    if(frameHandle) {
+        data = await evaluateLooxIframe(frameHandle);       
+    } else if(appsolveVersion) {
+        data = await evaluateAppSolveBasedReviews(page, appsolveVersion);
+    } else {
+        // error?
+    }
+
+    await page.close();
+    await browser.close();
+    return data;
+
+}
+
+async function evaluateLooxIframe(frameHandle) {
+
+    const frame = await frameHandle.contentFrame();
+    const data = await frame.evaluate(async () => {
 
         class Review {
-            constructor(author, body, original_body, imageUrl, rating, title, email, created_at, state, product_handle ) {
-              this.author = author;
-              this.body = body;
-              this.original_body = original_body;
-              this.imageUrl = imageUrl;
-              this.rating = rating;
-              this.title = title;
-              this.email = email;
-              this.created_at = created_at;
-              this.state = state;
-              this.product_handle = product_handle;
+            constructor(author, body, original_body, imageUrl, rating, title, email, created_at, state, product_handle) {
+                this.author = author;
+                this.body = body;
+                this.original_body = original_body;
+                this.imageUrl = imageUrl;
+                this.rating = rating;
+                this.title = title;
+                this.email = email;
+                this.created_at = created_at;
+                this.state = state;
+                this.product_handle = product_handle;
             }
         }
 
@@ -116,7 +146,7 @@ async function scrape(shopUrl) {
         const rawReviews = Array.from(document.getElementsByClassName('grid-item-wrap'));
 
         for (let index = 0; index < numOfPages; index++) {
-            if(button.getAttribute('style') !== 'display: none;') {
+            if (button.getAttribute('style') !== 'display: none;') {
                 document.getElementById('loadMore').click();
                 await delay(500);
                 rawReviews.push(...Array.from(document.getElementsByClassName('grid-item-wrap')));
@@ -141,27 +171,46 @@ async function scrape(shopUrl) {
                 );
             });
 
-            const uniqueReviews = duplicateReviews.filter((v,i,a)=>a.findIndex(t=>(t.author === v.author))===i);
+            const uniqueReviews = duplicateReviews.filter((v, i, a) => a.findIndex(t => (t.author === v.author)) === i);
             return uniqueReviews;
 
         }
 
         function delay(time) {
-            return new Promise(function(resolve) { 
+            return new Promise(function (resolve) {
                 setTimeout(resolve, time)
             });
         }
 
     });
 
-    await browser.close();
-
     return data;
+}
 
-};
+async function evaluateAppSolveBasedReviews(page, appsolveVersion) {
+    const productId = await page.evaluate(() => {
+        return window.ShopifyAnalytics.meta.product.id;
+    });
+    const url = `https://appsolve.io/api/reviews/${appsolveVersion}/${productId}.json`;
+    console.log(`fetching: ${url}`);
+    const rawReviews = await fetch(`https://appsolve.io/api/reviews/${appsolveVersion}/${productId}.json`)
+        .then(res => res.json());
+    return rawReviews.reviews.map(rawReview => ({
+        author: rawReview.name,
+        body: rawReview.review,
+        original_body: rawReview.review,
+        imageUrl: rawReview.imgUrl ? `https://ae01.alicdn.com/kf/${rawReview.imgUrl}.jpg` : null,
+        rating: rawReview.stars,
+        title: 'title',
+        email: 'john.appleseed@example.com',
+        created_at: rawReview.date,
+        state: 'published'
+    }));
+}
+
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 app.use(express.static(path.join(__dirname, 'public')));
-let server = app.listen(process.env.PORT || 3000, function() {
+let server = app.listen(process.env.PORT || 3000, function () {
     console.log('Server is listening on port ' + process?.env?.PORT || 3000)
 });
