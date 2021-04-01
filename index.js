@@ -155,18 +155,18 @@ async function evaluateLooxIframe(frameHandle) {
 
         return parseReviews(rawReviews);
 
-        function parseReviews(rawReviews) {
-            const duplicateReviews = Array.from(rawReviews).map(rawReview => {
+        function parseReviews(reviews) {
+            const duplicateReviews = Array.from(reviews).map(rawReview => {
                 const img = rawReview.getElementsByClassName('item-img')[0];
                 return new Review(
                     rawReview.querySelector('.block.title').textContent,
                     rawReview.querySelector('.pre-wrap.main-text.action').textContent,
                     rawReview.querySelector('.pre-wrap.main-text.action').textContent,
                     img ? img.firstChild.src.replace('.jpg', '_mid.jpg') : null,
-                    5,
+                    randomRating(),
                     'title',
                     'john.appleseed@example.com',
-                    '2020-01-09 16:40:12 -0400',
+                    randomDate(new Date(2020, 0, 1), new Date()),
                     'published'
                 );
             });
@@ -180,6 +180,31 @@ async function evaluateLooxIframe(frameHandle) {
             return new Promise(function (resolve) {
                 setTimeout(resolve, time)
             });
+        }
+
+        /* returns 4.9 rating in average */
+        function randomRating() {
+            const numbers = [];
+            for (let i = 0; i < 90; ++i) {
+                numbers[i] = 5;
+            }
+            for (let i = 90; i < 98; ++i) {
+                numbers[i] = 4;
+            }
+            for (let i = 98; i < 101; ++i) {
+                numbers[i] = 3;
+            }
+            const index = Math.floor(Math.random()*100);
+            return numbers[index];
+        }
+
+        /* returns random date in specified range */
+        function randomDate(start, end) {
+            const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+            let ye = new Intl.DateTimeFormat('en', { year: 'numeric' }).format(date);
+            let mo = new Intl.DateTimeFormat('en', { month: '2-digit' }).format(date);
+            let da = new Intl.DateTimeFormat('en', { day: '2-digit' }).format(date);
+            return `${ye}-${mo}-${da}`;
         }
 
     });
